@@ -49,32 +49,30 @@ public class NumberFactors {
         LowThreshold = lowThreshold;
         HighThreshold = highThreshold;
     }
-
-    public List<long> GetFactors(ref readonly int threadId = -1) {
+    
+    public IEnumerable<long> GetFactors() {
         if (Number is null) {
             return [];
         }
 
         List<long> factors = [];
         for (var factor = _lowThreshold; factor < _highThreshold; ++factor) {
-            if (factor == 0) {
-                continue;
-            }
-
-            if (Number % factor != 0) {
+            if (factor == 0 || Number % factor != 0) {
                 continue;
             }
 
             factors.Add(factor);
-            
-            if (threadId > -1) {
-                Console.WriteLine($"thread Id: {threadId}, thread result: {factor}");
-            }
+
+            // Console.WriteLine(
+            //     threadId > -1
+            //         ? $"thread Id: {threadId}, thread result: {factor}"
+            //         : $"Thread result: {factor}"
+            // );
         }
 
-        if (factors.Count <= 0) {
-            Console.WriteLine($"In range of thread {threadId} no factors were found");
-        }
+        // if (factors.Count <= 0) {
+        //     Console.WriteLine($"In range of thread {threadId} no factors were found");
+        // }
 
         return factors;
     }
