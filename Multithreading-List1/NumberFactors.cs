@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualBasic.CompilerServices;
+﻿using System.Diagnostics;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace Multithreading_List1;
 
@@ -49,30 +50,25 @@ public class NumberFactors {
         LowThreshold = lowThreshold;
         HighThreshold = highThreshold;
     }
-    
+
     public IEnumerable<long> GetFactors() {
         if (Number is null) {
             return [];
         }
 
         List<long> factors = [];
+
         for (var factor = _lowThreshold; factor < _highThreshold; ++factor) {
-            if (factor == 0 || Number % factor != 0) {
+            if (factor == 0) {
+                ++factor;
+            }
+
+            if (Number % factor != 0) {
                 continue;
             }
 
             factors.Add(factor);
-
-            // Console.WriteLine(
-            //     threadId > -1
-            //         ? $"thread Id: {threadId}, thread result: {factor}"
-            //         : $"Thread result: {factor}"
-            // );
         }
-
-        // if (factors.Count <= 0) {
-        //     Console.WriteLine($"In range of thread {threadId} no factors were found");
-        // }
 
         return factors;
     }
