@@ -98,19 +98,20 @@ void RunLaplaceExpansion() {
     //     1, -5, -2, 1
     // ], 1);
     
-    var le = new LaplaceExpansion([
-        1, 0, 0, 0, 0,
-        0, 1, 0, 0, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 0, 1, 0,
-        0, 0, 0, 0, 1
-    ]);
-
     // var le = new LaplaceExpansion([
-    //     1, 0, 0,
-    //     0, 1, 0,
-    //     0, 0, 1
+    //     1, 0, 0, 0, 0, 0,
+    //     0, 1, 0, 0, 0, 0,
+    //     0, 0, 1, 0, 0, 0,
+    //     0, 0, 0, 1, 0, 0,
+    //     0, 0, 0, 0, 1, 0,
+    //     0, 0, 0, 0, 0, 1,
     // ]);
+
+    var le = new LaplaceExpansion([
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    ]);
 
     var sw = new Stopwatch();
     sw.Start();

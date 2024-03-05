@@ -37,10 +37,6 @@ public class LaplaceExpansion {
     }
 
     public long UseLaplaceExpansion(ulong refMatrix) {
-        if (GetMatrixSize(refMatrix) <= 3) {
-            return MatrixDeterminant(RefToMatrix(refMatrix));
-        }
-
         var matrices = new List<ulong>();
         var factors = new List<long>();
 
@@ -55,8 +51,9 @@ public class LaplaceExpansion {
             }
 
             factors.Add(factor);
-            matrices.Add(GetAlgebraicComplement(refMatrix, (uint)(Size / GetMatrixSize(refMatrix)), (uint)ignoredColumn));
-            
+            matrices.Add(
+                GetAlgebraicComplement(refMatrix, (uint)ignoredColumn));
+
             ++erCol;
         }
 
@@ -105,24 +102,45 @@ public class LaplaceExpansion {
     }
 
     // TODO: The binary states are wrong for matrices bigger than 4x4
-    private ulong GetAlgebraicComplement(ulong refMatrix, uint ignoredRow, uint ignoredCol) {
+    private ulong GetAlgebraicComplement(ulong refMatrix, uint ignoredCol) {
         var algebraicComplement = 0Ul;
-        
-        for (var row = 0; row < Size; ++row) {
-            for (var col = 0; col < Size; ++col) {
-                if (row == ignoredRow) continue;
-                if (col == ignoredCol) continue;
+        var ignoredRow = Size - GetMatrixSize(refMatrix);
 
-                var posDec = col + row * Size;
-                if (!HasReferenceInBinaryPosition((byte)posDec, refMatrix)) {
-                    continue;
-                }
-                
+        while (IsZeroCol(refMatrix, (int)(ignoredCol + ignoredRow * Size))) {
+            if (ignoredCol >= Size - 1) {
+                break;
+            }
+
+            ignoredCol += 1;
+        }
+
+        for (var row = 0; row < Size; ++row) {
+            if (row == ignoredRow) continue;
+            if (IsZeroRow(refMatrix, row)) continue;
+            
+            for (var col = 0; col < Size; ++col) {
+                if (col == ignoredCol) continue;
+                if (IsZeroCol(refMatrix, col + ignoredRow * Size)) continue;
+
                 algebraicComplement |= 1UL << col + row * Size;
             }
         }
 
         return algebraicComplement;
+    }
+
+    private bool IsZeroRow(ulong refMatrix, int rowId) {
+        for (var colId = 0; colId < Size; colId++) {
+            if (((refMatrix >> (colId + rowId * Size)) & 1UL) == 1) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsZeroCol(ulong refMatrix, int colId) {
+        return ((refMatrix >> colId) & 1UL) == 0;
     }
 
     private static bool HasReferenceInBinaryPosition(byte position, ulong binPosition) {
