@@ -1,162 +1,117 @@
 ﻿namespace Multithreading_List1;
 
-public class LaplaceExpansion {
-    private List<long> _matrix = [0];
+public class LaplaceExpansion(List<long> matrix, int threads) {
+    private List<long> Matrix { get; set; } = matrix;
+    public int Threads { get; set; } = threads;
 
-    public List<long> Matrix {
-        get => _matrix;
-        set {
-            if (!IsSquareMatrix(value) || value.Count <= 0) {
-                Console.WriteLine("Matrix is not square or matrix is empty");
-                return;
-            }
+    private struct AlgebraicComplement {
+        public List<int> ColsIgnored { get; set; } = [];
+        public List<int> RowsIgnored { get; set; } = [];
+        public long Factor { get; set; } = 0;
 
-            _matrix = value;
-            Size = (int)Math.Sqrt(value.Count);
-        }
-    }
-
-    /// <summary>
-    /// Returns ulong value where positions are set to high bits
-    /// </summary>
-    public ulong RefMatrix {
-        get {
-            var referenceMatrix = 0UL;
-            for (var i = 0; i < _matrix.Count; ++i) {
-                referenceMatrix |= 1UL << i;
-            }
-
-            return referenceMatrix;
-        }
-    }
-
-    public int Size { get; private set; }
-
-    public LaplaceExpansion(List<long> matrix, uint maxThreads = 1) {
-        Matrix = matrix;
-    }
-
-    public long UseLaplaceExpansion(ulong refMatrix) {
-        var matrices = new List<ulong>();
-        var factors = new List<long>();
-
-        // First try is on first row
-        for (var erCol = 0; erCol < GetMatrixSize(refMatrix);) {
-            var ignoredColumn = erCol;
-
-            var factor = (int)Math.Pow(-1, ignoredColumn) * RefToMatrix(refMatrix)[ignoredColumn];
-            if (factor == 0) {
-                ++erCol;
-                continue;
-            }
-
-            factors.Add(factor);
-            matrices.Add(
-                GetAlgebraicComplement(refMatrix, (uint)ignoredColumn));
-
-            ++erCol;
+        public AlgebraicComplement(List<int> colsIgnored, List<int> rowsIgnored, long factor) {
+            ColsIgnored = colsIgnored;
+            RowsIgnored = rowsIgnored;
+            Factor = factor;
         }
 
-        var result = 0L;
+        public static AlgebraicComplement Empty => new([], [], 0);
+    }
 
-        for (var i = 0; i < matrices.Count; ++i) {
-            if (GetMatrixSize(matrices[i]) > 3) {
-                result += factors[i] * UseLaplaceExpansion(matrices[i]);
+    public long UseLaplaceExpansion() {
+        return UseLaplaceExpansion(AlgebraicComplement.Empty);
+    }
+
+    private long UseLaplaceExpansion(AlgebraicComplement thisComplement) {
+        var complements = new List<AlgebraicComplement>();
+        var rowId = 0;
+        if (thisComplement.RowsIgnored.Count > 0) {
+            rowId = thisComplement.RowsIgnored.LastOrDefault(0);
+        }
+
+        for (var colId = 0; colId < MatrixSize(); ++colId) {
+            if (thisComplement.ColsIgnored.Contains(colId)) continue;
+            var x = new AlgebraicComplement([..thisComplement.ColsIgnored],
+                [..thisComplement.RowsIgnored],
+                thisComplement.Factor);
+            var nextComplement = GetAlgebraicComplement(rowId, colId, x);
+            complements.Add(nextComplement);
+        }
+
+        var complementsSize = MatrixSize() - MatrixSize(complements.First());
+        var determinant = (long)0;
+
+        foreach (var item in complements) {
+            if (complementsSize > 3) {
+                determinant += UseLaplaceExpansion(item);
             }
             else {
-                var x = MatrixDeterminant(RefToMatrix(matrices[i]));
-                x *= factors[i];
-
-                result += x;
+                var sgn = (long)Math.Pow(-1, item.RowsIgnored.LastOrDefault(0) + item.ColsIgnored.LastOrDefault(0));
+                determinant += sgn *
+                               item.Factor *
+                               MatrixDeterminant(item);
             }
         }
-
-        return result;
-    }
-
-    private List<long> RefToMatrix(ulong refMatrix) {
-        var matrix = new List<long>();
-
-        for (var pos = 0; pos < Size * Size; ++pos) {
-            if (!HasReferenceInBinaryPosition((byte)pos, refMatrix)) {
-                continue;
-            }
-
-            matrix.Add(_matrix[pos]);
-        }
-
-        return matrix;
-    }
-
-    private static long MatrixDeterminant(IList<long> matrix) {
-        var determinant = GetMatrixSize(matrix) switch {
-                              3 => matrix[0] * matrix[4] * matrix[8] + matrix[1] * matrix[5] * matrix[6] +
-                                   matrix[2] * matrix[3] * matrix[7] - matrix[2] * matrix[4] * matrix[6] -
-                                   matrix[1] * matrix[3] * matrix[8] - matrix[0] * matrix[5] * matrix[7],
-                              2 => matrix[0] * matrix[3] - matrix[1] * matrix[2],
-                              1 => matrix[0],
-                              _ => 0
-                          };
 
         return determinant;
     }
 
-    // TODO: The binary states are wrong for matrices bigger than 4x4
-    private ulong GetAlgebraicComplement(ulong refMatrix, uint ignoredCol) {
-        var algebraicComplement = 0Ul;
-        var ignoredRow = Size - GetMatrixSize(refMatrix);
+    /// <summary>
+    ///  Works only for matrices of sizes lower than 3
+    /// </summary>
+    /// <param name="algebraicComplement"></param>
+    /// <returns></returns>
+    private long MatrixDeterminant(AlgebraicComplement algebraicComplement) {
+        List<long> matrix = [];
 
-        while (IsZeroCol(refMatrix, (int)(ignoredCol + ignoredRow * Size))) {
-            if (ignoredCol >= Size - 1) {
-                break;
-            }
+        for (var row = 0; row < MatrixSize(); ++row) {
+            if (algebraicComplement.RowsIgnored.Contains(row)) continue;
+            for (var col = 0; col < MatrixSize(); ++col) {
+                if (algebraicComplement.ColsIgnored.Contains(col)) continue;
 
-            ignoredCol += 1;
-        }
-
-        for (var row = 0; row < Size; ++row) {
-            if (row == ignoredRow) continue;
-            if (IsZeroRow(refMatrix, row)) continue;
-            
-            for (var col = 0; col < Size; ++col) {
-                if (col == ignoredCol) continue;
-                if (IsZeroCol(refMatrix, col + ignoredRow * Size)) continue;
-
-                algebraicComplement |= 1UL << col + row * Size;
+                var matrixItem = Matrix[row * MatrixSize() + col];
+                matrix.Add(matrixItem);
             }
         }
+
+        var matrixSize = MatrixSize() - algebraicComplement.RowsIgnored.Count;
+        var determinant = matrixSize switch {
+            3 => (matrix[0] * matrix[4] * matrix[8] +
+                  matrix[1] * matrix[5] * matrix[6] +
+                  matrix[2] * matrix[3] * matrix[7]) -
+                 (matrix[2] * matrix[4] * matrix[6] +
+                  matrix[1] * matrix[3] * matrix[8] +
+                  matrix[0] * matrix[5] * matrix[7]),
+            2 => matrix[0] * matrix[3] - matrix[1] * matrix[2],
+            1 => matrix[0],
+            _ => 0
+        };
+
+        return determinant;
+    }
+
+    private AlgebraicComplement GetAlgebraicComplement(int row, int col,
+        AlgebraicComplement algebraicComplement) {
+        if (!algebraicComplement.ColsIgnored.Contains(col)) {
+            algebraicComplement.ColsIgnored.Add(col);
+        }
+
+        if (!algebraicComplement.RowsIgnored.Contains(row)) {
+            algebraicComplement.RowsIgnored.Add(row);
+        }
+
+        var factorPosition = row * MatrixSize() + col;
+        var factor = Matrix[factorPosition];
+        algebraicComplement.Factor = factor;
 
         return algebraicComplement;
     }
 
-    private bool IsZeroRow(ulong refMatrix, int rowId) {
-        for (var colId = 0; colId < Size; colId++) {
-            if (((refMatrix >> (colId + rowId * Size)) & 1UL) == 1) {
-                return false;
-            }
-        }
-
-        return true;
+    private int MatrixSize() {
+        return (int)Math.Sqrt(Matrix.Count);
     }
 
-    private static bool IsZeroCol(ulong refMatrix, int colId) {
-        return ((refMatrix >> colId) & 1UL) == 0;
-    }
-
-    private static bool HasReferenceInBinaryPosition(byte position, ulong binPosition) {
-        return ((binPosition >> position) & 1) == 1;
-    }
-
-    private static bool IsSquareMatrix(ICollection<long> matrix) {
-        var size = (int)Math.Sqrt(matrix.Count);
-        return size * size == matrix.Count;
-    }
-
-    private static int GetMatrixSize(ulong matrix) {
-        return (int)Math.Sqrt(ulong.PopCount(matrix));
-    }
-
-    private static int GetMatrixSize(ICollection<long> matrix) {
-        return (int)Math.Sqrt(matrix.Count);
+    private int MatrixSize(AlgebraicComplement matrix) {
+        return MatrixSize() - matrix.RowsIgnored.Count;
     }
 }

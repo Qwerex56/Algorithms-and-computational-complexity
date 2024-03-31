@@ -91,12 +91,12 @@ void RunCalcFactors() {
 }
 
 void RunLaplaceExpansion() {
-    // var le = new LaplaceExpansion([
-    //     1, -2, 0, 3,
-    //     1, 0, -4, 5,
-    //     5, 2, 0, 2,
-    //     1, -5, -2, 1
-    // ], 1);
+    var le = new LaplaceExpansion([
+        1, -2, 0, 3,
+        1, 0, -4, 5,
+        5, 2, 0, 2,
+        1, -5, -2, 1
+    ], 1);
     
     // var le = new LaplaceExpansion([
     //     1, 0, 0, 0, 0, 0,
@@ -105,18 +105,18 @@ void RunLaplaceExpansion() {
     //     0, 0, 0, 1, 0, 0,
     //     0, 0, 0, 0, 1, 0,
     //     0, 0, 0, 0, 0, 1,
-    // ]);
+    // ], 1);
 
-    var le = new LaplaceExpansion([
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1
-    ]);
-
+    // var le = new LaplaceExpansion([
+    //     1, 0, 0,
+    //     0, 1, 0,
+    //     0, 0, 1
+    // ], 1);
+    
     var sw = new Stopwatch();
     sw.Start();
     
-    var result = le.UseLaplaceExpansion(le.RefMatrix);
+    var result = le.UseLaplaceExpansion();
     
     sw.Stop();
     Console.WriteLine($"\nExecution time (ms): {sw.ElapsedMilliseconds}.");
