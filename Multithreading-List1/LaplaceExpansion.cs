@@ -27,6 +27,7 @@ public class LaplaceExpansion(List<long> matrix, int threads) {
         var rowId = 0;
         if (thisComplement.RowsIgnored.Count > 0) {
             rowId = thisComplement.RowsIgnored.LastOrDefault(0);
+            rowId++;
         }
 
         for (var colId = 0; colId < MatrixSize(); ++colId) {
@@ -38,11 +39,14 @@ public class LaplaceExpansion(List<long> matrix, int threads) {
             complements.Add(nextComplement);
         }
 
-        var complementsSize = MatrixSize() - MatrixSize(complements.First());
-        var determinant = (long)0;
-
+        var complementsSize = MatrixSize(complements.FirstOrDefault(AlgebraicComplement.Empty));
+        var determinant = 0L;
+        
         foreach (var item in complements) {
-            if (complementsSize > 3) {
+            if (item.Factor == 0) {
+                determinant += 0L;
+            }
+            else if (complementsSize > 3) {
                 determinant += UseLaplaceExpansion(item);
             }
             else {

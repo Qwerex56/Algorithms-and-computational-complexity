@@ -48,7 +48,7 @@ void RunCalcFactors() {
         );
     }
 
-    var range = testNumber / threadCount + testNumber % threadCount;
+    var range = MathF.Ceiling(testNumber / (float)threadCount);
     var threads = new List<Thread>();
     var factors = new List<long>();
 
@@ -59,11 +59,15 @@ void RunCalcFactors() {
         var lowThreshold = range * threadId;
         var highThreshold = range * threadId + range;
 
-        var nf = new NumberFactors(lowThreshold, highThreshold, testNumber);
+        var nf = new NumberFactors((int)lowThreshold, (int)highThreshold, testNumber);
         var thread = new Thread(
-            () => factors.AddRange(nf.GetFactors())
+            () => {
+                var f = nf.GetFactors().ToList();
+                if (f.Count != 0) {
+                    factors.AddRange(f);
+                }
+            }
         );
-
         thread.Start();
         threads.Add(thread);
     }
@@ -91,13 +95,13 @@ void RunCalcFactors() {
 }
 
 void RunLaplaceExpansion() {
-    var le = new LaplaceExpansion([
-        1, -2, 0, 3,
-        1, 0, -4, 5,
-        5, 2, 0, 2,
-        1, -5, -2, 1
-    ], 1);
-    
+    // var le = new LaplaceExpansion([
+    //     1, -2, 0, 3,
+    //     1, 0, -4, 5,
+    //     5, 2, 0, 2,
+    //     1, -5, -2, 1
+    // ], 1); // result = -352
+
     // var le = new LaplaceExpansion([
     //     1, 0, 0, 0, 0, 0,
     //     0, 1, 0, 0, 0, 0,
@@ -105,21 +109,29 @@ void RunLaplaceExpansion() {
     //     0, 0, 0, 1, 0, 0,
     //     0, 0, 0, 0, 1, 0,
     //     0, 0, 0, 0, 0, 1,
-    // ], 1);
+    // ], 1); // res 1
 
+    var le = new LaplaceExpansion([
+        9, 2, 3, 4, 5,
+        1, 4, 3, 4, 6,
+        1, 2, 3, 4, 5,
+        1, 2, 4, 4, 6,
+        1, 5, 3, 4, 5,
+    ], 1); // res 96
+    
     // var le = new LaplaceExpansion([
     //     1, 0, 0,
     //     0, 1, 0,
     //     0, 0, 1
-    // ], 1);
-    
+    // ], 1); // res 1
+
     var sw = new Stopwatch();
     sw.Start();
-    
+
     var result = le.UseLaplaceExpansion();
-    
+
     sw.Stop();
     Console.WriteLine($"\nExecution time (ms): {sw.ElapsedMilliseconds}.");
-    
+
     Console.WriteLine($"Matrix det: {result}");
 }
