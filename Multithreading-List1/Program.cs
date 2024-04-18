@@ -31,10 +31,10 @@ void RunCalcFactors() {
         Console.WriteLine($"\nEnter new thread number (max: {Environment.ProcessorCount}): ");
 
         Console.WriteLine(
-            uint.TryParse(Console.ReadLine(), out threadCount)
-                ? $"Thread number changed, new thread count: {threadCount}."
-                : $"Thread number unchanged, thread count: {threadCount}."
-        );
+                          uint.TryParse(Console.ReadLine(), out threadCount)
+                              ? $"Thread number changed, new thread count: {threadCount}."
+                              : $"Thread number unchanged, thread count: {threadCount}."
+                         );
     }
 
     Console.WriteLine($"\nChange test number? (current number: {testNumber}) Y/N (Yes/no)");
@@ -42,10 +42,10 @@ void RunCalcFactors() {
         Console.WriteLine("\nEnter new test number: ");
 
         Console.WriteLine(
-            long.TryParse(Console.ReadLine(), out testNumber)
-                ? $"Test number changed, new test number: {testNumber}."
-                : $"Test number unchanged, test number: {testNumber}."
-        );
+                          long.TryParse(Console.ReadLine(), out testNumber)
+                              ? $"Test number changed, new test number: {testNumber}."
+                              : $"Test number unchanged, test number: {testNumber}."
+                         );
     }
 
     var range = MathF.Ceiling(testNumber / (float)threadCount);
@@ -61,13 +61,13 @@ void RunCalcFactors() {
 
         var nf = new NumberFactors((int)lowThreshold, (int)highThreshold, testNumber);
         var thread = new Thread(
-            () => {
-                var f = nf.GetFactors().ToList();
-                if (f.Count != 0) {
-                    factors.AddRange(f);
-                }
-            }
-        );
+                                () => {
+                                    var f = nf.GetFactors().ToList();
+                                    if (f.Count != 0) {
+                                        factors.AddRange(f);
+                                    }
+                                }
+                               );
         thread.Start();
         threads.Add(thread);
     }
@@ -111,19 +111,26 @@ void RunLaplaceExpansion() {
     //     0, 0, 0, 0, 0, 1,
     // ], 1); // res 1
 
-    var le = new LaplaceExpansion([
-        9, 2, 3, 4, 5,
-        1, 4, 3, 4, 6,
-        1, 2, 3, 4, 5,
-        1, 2, 4, 4, 6,
-        1, 5, 3, 4, 5,
-    ], 1); // res 96
-    
     // var le = new LaplaceExpansion([
-    //     1, 0, 0,
-    //     0, 1, 0,
-    //     0, 0, 1
-    // ], 1); // res 1
+    //     9, 2, 3, 4, 5,
+    //     1, 4, 3, 4, 6,
+    //     1, 2, 3, 4, 5,
+    //     1, 2, 4, 4, 6,
+    //     1, 5, 3, 4, 5,
+    // ], 1); // res 96
+
+    var le = new LaplaceExpansion([
+                                      123, 456, 789, 234, 567, 890, 345, 678, 901, 432,
+                                      765, 198, 543, 876, 219, 654, 987, 321, 654, 987,
+                                      123, 456, 789, 234, 567, 890, 345, 678, 901, 432,
+                                      765, 198, 543, 876, 219, 654, 987, 321, 654, 987,
+                                      123, 456, 789, 234, 567, 890, 345, 678, 901, 432,
+                                      765, 198, 543, 876, 219, 654, 987, 321, 654, 987,
+                                      123, 456, 789, 234, 567, 890, 345, 678, 901, 432,
+                                      765, 198, 543, 876, 219, 654, 987, 321, 654, 987,
+                                      123, 456, 789, 234, 567, 890, 345, 678, 901, 432,
+                                      765, 198, 543, 876, 219, 654, 987, 321, 654, 987
+                                  ], 1); // res 1
 
     var sw = new Stopwatch();
     sw.Start();
