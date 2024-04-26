@@ -1,8 +1,10 @@
-﻿namespace Multithreading_List1;
+﻿using System.Diagnostics.CodeAnalysis;
 
-public class LaplaceExpansion(List<long> matrix, int threads) {
+namespace Multithreading_List1;
+
+public class LaplaceExpansion(List<long> matrix, int maxThreadsCount) {
     private List<long> Matrix { get; set; } = matrix;
-    public int Threads { get; set; } = threads;
+    public int MaxThreadsCount { get; set; } = maxThreadsCount;
 
     private struct AlgebraicComplement {
         public List<int> ColsIgnored { get; set; } = [];
@@ -22,6 +24,7 @@ public class LaplaceExpansion(List<long> matrix, int threads) {
         return UseLaplaceExpansion(AlgebraicComplement.Empty);
     }
 
+    [SuppressMessage("ReSharper.DPA", "DPA0004: Closure object allocation")]
     private long UseLaplaceExpansion(AlgebraicComplement thisComplement) {
         var complements = new List<AlgebraicComplement>();
         var rowId = 0;
@@ -43,6 +46,9 @@ public class LaplaceExpansion(List<long> matrix, int threads) {
         var determinant = 0L;
 
         var signPow = 0;
+        var activeThreads = new Queue<Thread>();
+        var determinants = new List<(long, long, long)>();
+        
         foreach (var item in complements) {
             var sgn = (long)Math.Pow(-1, signPow++);
             var factor = item.Factor;
@@ -51,14 +57,34 @@ public class LaplaceExpansion(List<long> matrix, int threads) {
                 determinant += 0L;
             }
             else if (complementsSize > 3) {
-                determinant += sgn * item.Factor * UseLaplaceExpansion(item);
+                if (complementsSize < MatrixSize() - 1) {
+                    determinants.Add((sgn, item.Factor, UseLaplaceExpansion(item)));
+                    continue;
+                }
+                // determinant += sgn * item.Factor * UseLaplaceExpansion(item);
+                
+                var thread = new Thread(() => {
+                    determinants.Add((sgn, item.Factor, UseLaplaceExpansion(item)));
+                });
+
+                activeThreads.Enqueue(thread);
+                thread.Start();
             }
             else {
-                var comDet = MatrixDeterminant(item);
+                determinants.Add((sgn, factor, MatrixDeterminant(item)));
+            }
 
-                determinant += sgn * factor * comDet;
+            while (activeThreads.Count >= MaxThreadsCount) {
+                var thread = activeThreads.Dequeue();
+                thread.Join();
             }
         }
+
+        while (activeThreads.TryDequeue(out var thread)) {
+            thread.Join();
+        }
+
+        determinant += determinants.Sum(tuple => tuple.Item1 * tuple.Item2 * tuple.Item3);
 
         return determinant;
     }
